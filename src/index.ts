@@ -1,55 +1,32 @@
-import express from 'express';
-import cors from 'cors';
-import { getSnapshot, resetUnits } from './state';
-import { startSimulation, setDeltaHandler, resetSimulation } from './simulation';
-import { DeltaUpdate } from './types';
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --border: #334155;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --blue: #3b82f6;
+  --red: #ef4444;
+  --green: #22c55e;
+  --orange: #f97316;
+}
 
-const app = express();
-const PORT = 3001;
+[data-theme="light"] {
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --border: #cbd5e1;
+  --text: #1e293b;
+  --text-muted: #64748b;
+}
 
-app.use(cors({ origin: 'http://localhost:5173' }));
-app.use(express.json());
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', message: 'War Room Control server running' });
-});
-
-app.get('/snapshot', (_req, res) => {
-  const units = getSnapshot();
-  res.json({ count: units.length, units });
-});
-
-const sseClients = new Set<express.Response>();
-
-app.get('/events', (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders();
-
-  sseClients.add(res);
-  console.log(`SSE client connected (total: ${sseClients.size})`);
-
-  req.on('close', () => {
-    sseClients.delete(res);
-    console.log(`SSE client disconnected (total: ${sseClients.size})`);
-  });
-});
-
-setDeltaHandler((delta: DeltaUpdate) => {
-  const data = `data: ${JSON.stringify(delta)}\n\n`;
-  sseClients.forEach(client => client.write(data));
-});
-
-app.post('/restart', (_req, res) => {
-  resetUnits();
-  resetSimulation();
-  startSimulation();
-  res.json({ ok: true });
-  console.log('Battle restarted');
-});
-
-app.listen(PORT, () => {
-  console.log(`War Room Control server running on port ${PORT}`);
-  startSimulation();
-});
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
